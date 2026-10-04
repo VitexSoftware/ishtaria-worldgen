@@ -1,0 +1,11 @@
+[package]
+name = "ishtaria-worldgen"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Deterministic procedural planet generator for Ishtaria (cube-sphere terrain from a seed)."
+repository = "https://github.com/VitexSoftware/ishtaria-worldgen"
+authors = ["Vítězslav Dvořák <cybervitexus@gmail.com>"]
+rust-version = "1.80"
+
+[dependencies]

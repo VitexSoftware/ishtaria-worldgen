@@ -1,0 +1,15 @@
+Source: ishtaria-worldgen
+Section: misc
+Priority: optional
+Maintainer: Vítězslav Dvořák <cybervitexus@gmail.com>
+Build-Depends: debhelper-compat (= 13), cargo, rustc (>= 1.80)
+Standards-Version: 4.7.0
+Homepage: https://github.com/VitexSoftware/ishtaria-worldgen
+Rules-Requires-Root: no
+
+Package: ishtaria-worldgen
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: deterministic procedural planet generator for Ishtaria
+ Generates cube-sphere terrain of an Earth-sized planet from a seed.
+ The world itself is never stored in full; servers keep only changes.
