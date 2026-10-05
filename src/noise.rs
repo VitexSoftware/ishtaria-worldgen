@@ -1,8 +1,7 @@
 //! Deterministic 3D value noise with fractal octaves.
 //!
 //! Sampling on the sphere surface (not in face UV space) avoids seams at
-//! cube edges. Placeholder quality – to be replaced by a proper
-//! gradient/simplex noise with erosion passes.
+//! cube edges. Continental shelves and ridged mountains share this domain.
 
 use crate::cubesphere::Vec3;
 
@@ -62,17 +61,27 @@ fn value_noise(seed: u64, p: Vec3) -> f64 {
 impl Terrain {
     /// Elevation in metres for a point on the unit sphere.
     pub fn elevation(&self, unit: Vec3) -> f64 {
+        if self.octaves == 0 || !self.amplitude_m.is_finite() || self.amplitude_m <= 0.0 {
+            return 0.0;
+        }
+        let continents = value_noise(self.seed, unit.scale(2.0));
+        let mountain_region = value_noise(self.seed.wrapping_add(100), unit.scale(5.0));
+        let ridge = 1.0 - value_noise(self.seed.wrapping_add(200), unit.scale(18.0)).abs();
+        let mountain = (mountain_region + 0.15).clamp(0.0, 1.0) * ridge.powi(3);
         let mut sum = 0.0;
         let mut amp = 1.0;
-        let mut freq = 2.0;
+        let mut freq = 8.0;
         let mut norm = 0.0;
-        for o in 0..self.octaves {
+        for o in 0..self.octaves.min(16) {
             sum += amp * value_noise(self.seed.wrapping_add(o as u64), unit.scale(freq));
             norm += amp;
             amp *= 0.5;
             freq *= 2.0;
         }
-        sum / norm * self.amplitude_m
+        let hills = sum / norm;
+        let land = ((continents + 0.08) * 4.0).clamp(0.0, 1.0);
+        (continents * 0.8 - 0.08 + land * (mountain * 0.65 + hills * 0.12)).clamp(-1.0, 1.0)
+            * self.amplitude_m
     }
 }
 
@@ -102,5 +111,51 @@ mod tests {
         }
         .elevation(p);
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn finite_bounded_terrain_has_seas_lowlands_and_mountains() {
+        let terrain = Terrain {
+            seed: 42,
+            ..Terrain::default()
+        };
+        let mut bands = [0; 3];
+        for face in Face::ALL {
+            for row in 0..32 {
+                for column in 0..32 {
+                    let point = face.sphere_point(
+                        (column as f64 + 0.5) / 16.0 - 1.0,
+                        (row as f64 + 0.5) / 16.0 - 1.0,
+                    );
+                    let elevation = terrain.elevation(point);
+                    assert!(elevation.is_finite() && elevation.abs() <= terrain.amplitude_m);
+                    bands[if elevation < 0.0 {
+                        0
+                    } else if elevation < 1600.0 {
+                        1
+                    } else {
+                        2
+                    }] += 1;
+                }
+            }
+        }
+        assert!(bands.into_iter().all(|count| count > 100), "{bands:?}");
+    }
+
+    #[test]
+    fn empty_octaves_are_flat_and_cube_edges_match() {
+        let terrain = Terrain::default();
+        assert_eq!(
+            Terrain {
+                octaves: 0,
+                ..terrain
+            }
+            .elevation(Face::PosZ.sphere_point(0.0, 0.0)),
+            0.0
+        );
+        assert_eq!(
+            terrain.elevation(Face::PosZ.sphere_point(1.0, 0.3)),
+            terrain.elevation(Face::PosX.sphere_point(-1.0, 0.3))
+        );
     }
 }

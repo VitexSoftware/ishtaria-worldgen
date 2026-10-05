@@ -6,6 +6,20 @@ Deterministic procedural generator of an Earth-sized planet. Terrain is a pure f
 ishtaria-worldgen 42 256 > planet.pgm     # six cube faces as a height-map strip
 ```
 
+The generator combines continental shelves, lowland hills and ridged mountain
+regions. Noise is sampled in three-dimensional sphere coordinates, so neighboring
+cube faces meet without seams. Default elevation amplitude is 8000 metres;
+the PGM encodes `[-8000, 8000]` as `[0, 255]`, with sea level at 127.5.
+Servers derive lakes, downhill drainage, river catchments and climate biomes from
+the persisted map; clients render water, snow and biome-selected scenery.
+
+This terrain algorithm changes newly generated maps, including maps generated
+with an existing seed. Do not regenerate over an imported world's source file or
+overwrite its database. Existing imports remain intact and conflicting imports
+are rejected. An algorithm upgrade for a populated world requires a separate
+version/migration decision. The finite PGM is a preview, not metre-resolution
+Earth terrain or hydraulic/erosion simulation.
+
 ## Installation
 
 Debian / Ubuntu (x86-64) only:
