@@ -1,5 +1,7 @@
 # ishtaria-worldgen
 
+<img src="https://raw.githubusercontent.com/VitexSoftware/ishtaria-client/main/assets/branding/emblem.png" alt="Ishtaria" width="96">
+
 Deterministic procedural generator of an Earth-sized planet. Terrain is a pure function of `(seed, position)` on a cube-sphere; worlds store only deltas.
 
 ```sh
